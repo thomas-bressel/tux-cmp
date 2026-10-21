@@ -32,8 +32,7 @@ void TuxCmpPlugin::stop()
     // TuxAPE unloads the library next: nothing of it may be left running,
     // nor its translator installed.
     qApp->removeEventFilter(this);
-    // The window goes, and with it a compression under way and the
-    // loader's window if it is open.
+    // The window goes, and with it a compression under way.
     delete window_;
     QCoreApplication::removeTranslator(&translator_);
     // The entry and the button are TuxAPE's: it takes them back.

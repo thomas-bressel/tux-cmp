@@ -17,7 +17,6 @@
 #include <QLineEdit>
 #include <QLocale>
 #include <QMimeData>
-#include <QPointer>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QThread>
@@ -455,17 +454,10 @@ bool CompressorWindow::makeLoader(const DiscTarget& target)
         if (tuxcmp::cpc::works(tuxcmp::cpc::checkLoader(kept, original, packed_->data)))
             loader = kept;
     }
-    // The window's own: if the window goes while it is open, as when TuxAPE
-    // stops the plugin, it goes first, and nothing of either is used after.
-    const QPointer<CompressorWindow> self(this);
-    const QPointer<LoaderDialog> dialog = new LoaderDialog(host_, target, original, *packed_, loader, this);
-    const int answer = dialog->exec();
-    if (!self || !dialog)
+    LoaderDialog dialog(host_, target, original, *packed_, loader, this);
+    if (dialog.exec() != QDialog::Accepted)
         return false;
-    const tuxcmp::cpc::Loader made = dialog->loader();
-    delete dialog;
-    if (answer != QDialog::Accepted)
-        return false;
+    const tuxcmp::cpc::Loader made = dialog.loader();
     // The compressed file went again on the disc, with the loader's header.
     setWithHeader(true);
     setLoadAddress(made.source);
