@@ -1,0 +1,12 @@
+{
+    "id": "tuxcmp",
+    "name": "TuxCMP – ZX0 Compressor",
+    "version": "@PROJECT_VERSION@",
+    "api": 3,
+    "author": "a C++ port of PackZX0",
+    "licence": "BSD-3-Clause",
+    "description": "Compresses any file with ZX0, as PackZX0 does, puts it on the disc in a drive of TuxAPE or on TuxDSK's, and writes beside it a BASIC loader and the Z80 program that decompresses it.",
+    "libraries": {
+        "@TUXCMP_PLATFORM@": "@TUXCMP_PLATFORM@/@CMAKE_SHARED_MODULE_PREFIX@tuxcmp@CMAKE_SHARED_MODULE_SUFFIX@"
+    }
+}

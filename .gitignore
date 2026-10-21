@@ -1,0 +1,5 @@
+# Build output and the archives made of it
+/build*/
+/dist/
+
+CMakeUserPresets.json
