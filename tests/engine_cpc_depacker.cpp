@@ -114,5 +114,5 @@ int main()
     CHECK(source.find("dzx0s_elias_backtrack:") != std::string::npos);
     const std::string jumping = tuxcmp::cpc::depackerSource({0xA000, 0x4000, 0x1000, uint16_t(0x1234)}, "GAME.ZX0");
     CHECK(jumping.find("jp &1234") != std::string::npos);
-    return checkSummary("cpc_depacker");
+    return checkSummary("engine_cpc_depacker");
 }

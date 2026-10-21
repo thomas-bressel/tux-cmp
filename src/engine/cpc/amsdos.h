@@ -25,7 +25,9 @@ struct Header {
 
 // The header a file starts with, if it has one: its checksum tells.
 std::optional<Header> readHeader(std::span<const uint8_t> file);
-// The file without its header, if it has one.
+// What AMSDOS loads of a file: what follows its header, as long as the
+// header says, not the rest of its last record; the whole file if it has no
+// header.
 std::span<const uint8_t> withoutHeader(std::span<const uint8_t> file);
 std::vector<uint8_t> makeHeader(const std::string& name, const Header& header);
 // A header followed by the data it is for.

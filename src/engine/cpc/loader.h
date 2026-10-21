@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "cpc/amsdos.h"
 #include "zx0/zx0.h"
 
 // A loader for a compressed file: a BASIC program that loads the file and
@@ -68,6 +69,14 @@ struct Finding {
     Problem problem;
     bool fatal;  // the loader would not work
 };
+
+// Where a file's data go back, unless the user says otherwise: where its
+// header loads them, if it has one (and it is not compressed with them); a
+// screen's 16K at &C000, a file of 16K or one called .SCR; else &4000.
+uint16_t defaultDestination(const std::optional<Header>& header, size_t length, const std::string& extension);
+// Where they are run once back, if the header says so: a binary file's
+// entry, among the data, below the screen. A picture is not run.
+std::optional<uint16_t> defaultEntry(const std::optional<Header>& header, size_t length);
 
 // The loader's names from the compressed file's, and its addresses chosen
 // where its parts do not lie over one another: high under HIMEM if they

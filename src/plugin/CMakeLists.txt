@@ -1,5 +1,3 @@
-find_package(Qt6 6.4 REQUIRED COMPONENTS Widgets)
-
 set(CMAKE_AUTOMOC ON)
 
 # The windows are a library, so that tests can drive them; the plugin itself
@@ -22,9 +20,11 @@ add_library(tuxcmp_ui STATIC
     icons.cpp
     icons.h
 )
-target_include_directories(tuxcmp_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${TUXAPE_DIR}/sdk)
+target_include_directories(tuxcmp_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${TUXAPE_SDK})
 target_link_libraries(tuxcmp_ui PUBLIC tuxcmp_cpc tuxcmp_zx0 tuxcmp_base Qt6::Widgets)
 
+# What TuxAPE loads: the plugin's class, and no more. tuxape_add_plugin()
+# names it after the plugin's id.
 add_library(tuxcmp MODULE
     tuxcmpplugin.cpp
     tuxcmpplugin.h

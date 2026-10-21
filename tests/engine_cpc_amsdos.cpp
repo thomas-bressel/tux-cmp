@@ -26,6 +26,10 @@ int main()
     CHECK(header && header->type == kBinary && header->loadAddress == 0x8D90 && header->entryAddress == 0x1234);
     CHECK(header && header->length == 1000);
     CHECK_EQ(withoutHeader(file).size(), 1000);
+    // A file to the end of its last record: what the header says, no more.
+    std::vector<uint8_t> padded = file;
+    padded.resize(128 + 1024, 0x1A);
+    CHECK(withoutHeader(padded).size() == 1000 && withoutHeader(padded)[999] == 0x33);
     // No header: data alone, zeroes, a checksum that is wrong.
     CHECK(!readHeader(data));
     CHECK(!readHeader(std::vector<uint8_t>(200, 0)));
@@ -46,5 +50,5 @@ int main()
     CHECK(nameLike("meta.scr", "") == "META");
     CHECK(nameLike("...", "BAS") == "FILE.BAS");
     CHECK(nameLike("a.b.c", "ZX0") == "A.ZX0");
-    return checkSummary("cpc_amsdos");
+    return checkSummary("engine_cpc_amsdos");
 }

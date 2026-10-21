@@ -17,6 +17,7 @@
 #include <QLineEdit>
 #include <QLocale>
 #include <QMimeData>
+#include <QPointer>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QThread>
@@ -29,24 +30,26 @@
 #include "plugin.h"
 #include "prompts.h"
 
+namespace tuxcmp {
+
 namespace {
 
 QString count(qsizetype bytes)
 {
-    return CompressorWindow::tr("%1 bytes").arg(QLocale().toString(static_cast<qlonglong>(bytes)));
+    return CompressorWindow::tr("%Ln bytes", nullptr, static_cast<int>(bytes));
 }
 
 QString typeName(uint8_t type)
 {
     switch (type) {
     case tuxcmp::cpc::kBasic:
-        return CompressorWindow::tr("BASIC program");
+        return CompressorWindow::tr("a BASIC program");
     case tuxcmp::cpc::kProtectedBasic:
-        return CompressorWindow::tr("protected BASIC program");
+        return CompressorWindow::tr("a protected BASIC program");
     case tuxcmp::cpc::kBinary:
-        return CompressorWindow::tr("binary file");
+        return CompressorWindow::tr("a binary file");
     default:
-        return CompressorWindow::tr("file of type %1").arg(type);
+        return CompressorWindow::tr("a file of type %1").arg(type);
     }
 }
 
@@ -58,11 +61,12 @@ CompressorWindow::CompressorWindow(tuxape::PluginHost* host, QWidget* parent)
     , preferences_(host ? host->dataFolder() : QString())
 {
     setWindowTitle(tr("TuxCMP – ZX0 Compressor"));
+    setObjectName("CompressorWindow");
     setAcceptDrops(true);
 
     // ---- The file ----
     fileEdit_ = new QLineEdit;
-    fileEdit_->setObjectName("eFile");
+    fileEdit_->setObjectName("edFile");
     fileEdit_->setReadOnly(true);
     fileEdit_->setPlaceholderText(tr("Choose a file, or drop one on the window"));
     auto* browse = new QPushButton(tr("&Browse..."));
@@ -116,7 +120,7 @@ CompressorWindow::CompressorWindow(tuxape::PluginHost* host, QWidget* parent)
 
     // ---- The compressed file ----
     name_ = new QLineEdit;
-    name_->setObjectName("eName");
+    name_->setObjectName("edName");
     name_->setMaxLength(12);
     name_->setToolTip(tr("Its name on the disc: eight characters at most, a dot and three."));
     connect(name_, &QLineEdit::textChanged, this, &CompressorWindow::updateButtons);
@@ -129,7 +133,7 @@ CompressorWindow::CompressorWindow(tuxape::PluginHost* host, QWidget* parent)
         updateButtons();
     });
     load_ = new QLineEdit;
-    load_->setObjectName("eLoad");
+    load_->setObjectName("edLoad");
     load_->setMaximumWidth(fontMetrics().horizontalAdvance(QStringLiteral("&FFFFFF")) + 16);
     connect(load_, &QLineEdit::textChanged, this, &CompressorWindow::updateButtons);
     auto* packedBox = new QGroupBox(tr("Compressed File"));
@@ -230,15 +234,16 @@ bool CompressorWindow::openFile(const QString& path)
     preferences_.setInputFolder(QFileInfo(path).absolutePath());
 
     fileEdit_->setText(QDir::toNativeSeparators(path));
-    QString info = count(bytes.size()) + '.';
-    if (header_) {
-        info += ' ' + tr("An AMSDOS header: a %1 of %2, loading at %3").arg(typeName(header_->type), count(header_->length),
-                                                                             addressText(header_->loadAddress));
-        if (header_->type == tuxcmp::cpc::kBinary && header_->entryAddress)
-            info += tr(", run at %1").arg(addressText(header_->entryAddress));
-        info += '.';
-    }
-    fileInfo_->setText(info);
+    if (!header_)
+        fileInfo_->setText(tr("%1.").arg(count(bytes.size())));
+    else if (header_->type == tuxcmp::cpc::kBinary && header_->entryAddress)
+        fileInfo_->setText(tr("%1. An AMSDOS header: %2 of %3, loading at %4, run at %5.")
+                               .arg(count(bytes.size()), typeName(header_->type), count(header_->length),
+                                    addressText(header_->loadAddress), addressText(header_->entryAddress)));
+    else
+        fileInfo_->setText(tr("%1. An AMSDOS header: %2 of %3, loading at %4.")
+                               .arg(count(bytes.size()), typeName(header_->type), count(header_->length),
+                                    addressText(header_->loadAddress)));
     skipHeader_->setEnabled(header_.has_value());
     name_->setText(QString::fromStdString(tuxcmp::cpc::nameLike(QFileInfo(path).fileName().toStdString(), "ZX0")));
     setStatus(QString());
@@ -248,14 +253,16 @@ bool CompressorWindow::openFile(const QString& path)
 
 std::vector<uint8_t> CompressorWindow::data() const
 {
-    if (!header_ || !skipHeader_->isChecked())
+    if (!skippedHeader())
         return file_;
-    // What AMSDOS would load: the length the header says, not the rest of
-    // the last record.
-    const auto begin = file_.begin() + static_cast<std::ptrdiff_t>(tuxcmp::cpc::kHeaderSize);
-    const size_t after = file_.size() - tuxcmp::cpc::kHeaderSize;
-    const size_t length = header_->length > 0 && static_cast<size_t>(header_->length) < after ? static_cast<size_t>(header_->length) : after;
-    return std::vector<uint8_t>(begin, begin + static_cast<std::ptrdiff_t>(length));
+    // What AMSDOS would load, as the command-line program compresses it.
+    const std::span<const uint8_t> loaded = tuxcmp::cpc::withoutHeader(file_);
+    return std::vector<uint8_t>(loaded.begin(), loaded.end());
+}
+
+std::optional<tuxcmp::cpc::Header> CompressorWindow::skippedHeader() const
+{
+    return skipHeader_->isChecked() ? header_ : std::nullopt;
 }
 
 void CompressorWindow::compress()
@@ -322,12 +329,11 @@ void CompressorWindow::finished()
         // What the CPC will get back, checked before it goes anywhere.
         checked_ = tuxcmp::zx0::decompress(packed_->data, job->data.size()) == job->data;
         const double share = 100.0 * static_cast<double>(packed_->data.size()) / static_cast<double>(job->data.size());
-        QString text = tr("%1: %2 % of %3.")
-                           .arg(count(static_cast<qsizetype>(packed_->data.size())), QLocale().toString(share, 'f', 1),
-                                count(static_cast<qsizetype>(job->data.size())));
-        text += ' ' + (checked_ ? tr("Decompressed again, they are the file.")
-                                : tr("Decompressed again, they are not the file: they are not to be used."));
-        result_->setText(text);
+        const QString text = checked_ ? tr("%1: %2 % of %3. Decompressed again, they are the file.")
+                                      : tr("%1: %2 % of %3. Decompressed again, they are not the file: they are not to "
+                                           "be used.");
+        result_->setText(text.arg(count(static_cast<qsizetype>(packed_->data.size())), QLocale().toString(share, 'f', 1),
+                                  count(static_cast<qsizetype>(job->data.size()))));
         // Where the loader would load it, if it is to have one.
         const tuxcmp::cpc::Loader loader = tuxcmp::cpc::suggestLoader(name_->text().toStdString(), destination(), entry(),
                                                                       static_cast<int>(job->data.size()), *packed_);
@@ -408,24 +414,12 @@ QByteArray CompressorWindow::packedFile() const
 
 uint16_t CompressorWindow::destination() const
 {
-    if (header_ && skipHeader_->isChecked())
-        return header_->loadAddress;
-    const QString suffix = QFileInfo(path_).suffix().toUpper();
-    const size_t size = data().size();
-    if (size <= 0x4000 && (size == 0x4000 || suffix == QLatin1String("SCR")))
-        return tuxcmp::cpc::kScreen;
-    return 0x4000;
+    return tuxcmp::cpc::defaultDestination(skippedHeader(), data().size(), QFileInfo(path_).suffix().toStdString());
 }
 
 std::optional<uint16_t> CompressorWindow::entry() const
 {
-    // A program says where it is run; a picture is not run.
-    if (!header_ || !skipHeader_->isChecked() || header_->type != tuxcmp::cpc::kBinary || !header_->entryAddress)
-        return std::nullopt;
-    const int start = header_->loadAddress, end = start + static_cast<int>(data().size());
-    if (start >= tuxcmp::cpc::kScreen || header_->entryAddress < start || header_->entryAddress >= end)
-        return std::nullopt;
-    return header_->entryAddress;
+    return tuxcmp::cpc::defaultEntry(skippedHeader(), data().size());
 }
 
 bool CompressorWindow::putOn(const DiscTarget& target, bool askForLoader)
@@ -439,7 +433,7 @@ bool CompressorWindow::putOn(const DiscTarget& target, bool askForLoader)
     setStatus(tr("%1 is on %2.").arg(name, discs::describe(target)));
     refreshDiscs();
     if (askForLoader
-        && prompts::ask(this, tr("Decompression Program"),
+        && prompts::ask(this, tr("TuxCMP – Decompression Program"),
                         tr("%1 is on %2.\n\nDo you want a program made to decompress it? A BASIC loader, and the "
                            "Z80 program it calls, go on the same disc.")
                             .arg(name, discs::describe(target))))
@@ -461,10 +455,17 @@ bool CompressorWindow::makeLoader(const DiscTarget& target)
         if (tuxcmp::cpc::works(tuxcmp::cpc::checkLoader(kept, original, packed_->data)))
             loader = kept;
     }
-    LoaderDialog dialog(host_, target, original, *packed_, loader, this);
-    if (dialog.exec() != QDialog::Accepted)
+    // The window's own: if the window goes while it is open, as when TuxAPE
+    // stops the plugin, it goes first, and nothing of either is used after.
+    const QPointer<CompressorWindow> self(this);
+    const QPointer<LoaderDialog> dialog = new LoaderDialog(host_, target, original, *packed_, loader, this);
+    const int answer = dialog->exec();
+    if (!self || !dialog)
         return false;
-    const tuxcmp::cpc::Loader made = dialog.loader();
+    const tuxcmp::cpc::Loader made = dialog->loader();
+    delete dialog;
+    if (answer != QDialog::Accepted)
+        return false;
     // The compressed file went again on the disc, with the loader's header.
     setWithHeader(true);
     setLoadAddress(made.source);
@@ -511,16 +512,20 @@ void CompressorWindow::refreshDiscs()
     const int drives = host_ ? host_->drives() : 0;
     for (int drive = 0; drive < drives; ++drive) {
         const tuxape::PluginDisc disc = host_->disc(drive);
-        QString text = tr("Drive %1:").arg(discs::driveLetter(drive)) + ' ';
+        const QString letter = discs::driveLetter(drive);
+        const int files = static_cast<int>(disc.files.size());
+        const QString free = QLocale().toString(disc.freeBytes / 1024);
+        QString text;
         if (!disc.present)
-            text += tr("no disc");
+            text = tr("Drive %1: no disc").arg(letter);
+        else if (!disc.writable && disc.name.isEmpty())
+            text = tr("Drive %1: a disc, which files cannot be put on").arg(letter);
         else if (!disc.writable)
-            text += tr("%1, which files cannot be put on").arg(disc.name.isEmpty() ? tr("a disc") : disc.name);
+            text = tr("Drive %1: %2, which files cannot be put on").arg(letter, disc.name);
+        else if (disc.name.isEmpty())
+            text = tr("Drive %1: a disc, %n file(s), %2K free", nullptr, files).arg(letter, free);
         else
-            text += tr("%1, %2 file(s), %3K free")
-                        .arg(disc.name.isEmpty() ? tr("a disc") : disc.name)
-                        .arg(disc.files.size())
-                        .arg(disc.freeBytes / 1024);
+            text = tr("Drive %1: %2, %n file(s), %3K free", nullptr, files).arg(letter, disc.name, free);
         drives_->addItem(text, drive);
     }
     if (drives == 0)
@@ -616,3 +621,5 @@ void CompressorWindow::dropEvent(QDropEvent* event)
         event->acceptProposedAction();
     }
 }
+
+}  // namespace tuxcmp

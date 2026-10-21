@@ -78,5 +78,5 @@ int main()
     CHECK(!tokenize("CLS"));
     CHECK(!tokenize(""));
     CHECK(!tokenize("10 CALL &10000"));
-    return checkSummary("cpc_basic");
+    return checkSummary("engine_cpc_basic");
 }

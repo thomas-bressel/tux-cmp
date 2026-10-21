@@ -19,6 +19,8 @@ namespace tuxape {
 class PluginHost;
 }
 
+namespace tuxcmp {
+
 // The window that makes the program to decompress a file: where the data
 // go back and whether they are run there, where the loader puts the
 // compressed file and the Z80 program, what the files are called. It shows
@@ -94,3 +96,5 @@ private:
     void showLoader();
     void update();
 };
+
+}  // namespace tuxcmp

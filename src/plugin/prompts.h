@@ -12,7 +12,7 @@ class QWidget;
 // A test that drives the windows has no one to answer: it says what the
 // answers are, and notes what was told.
 
-namespace prompts {
+namespace tuxcmp::prompts {
 
 void problem(QWidget* parent, const QString& text);
 bool ask(QWidget* parent, const QString& title, const QString& text);
@@ -21,4 +21,4 @@ bool ask(QWidget* parent, const QString& title, const QString& text);
 void setProblemHandler(std::function<void(const QString&)> handler);
 void setAnswerer(std::function<bool(const QString& text)> answerer);
 
-}  // namespace prompts
+}  // namespace tuxcmp::prompts

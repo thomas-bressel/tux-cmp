@@ -9,33 +9,34 @@
 
 #include "plugin.h"
 
-// A TuxAPE of the tests' own: a window, two drives whose discs are lists
-// of files, and a note of what was added and asked. TuxDSK is whatever
-// object the test says it is.
+// A TuxAPE of the tests' own: every function of PluginHost, of every
+// version, noting what the plugin asks of it. Its two drives' discs are
+// lists of files; TuxDSK is whatever object the test says it is.
 class Host : public tuxape::PluginHost {
 public:
-    explicit Host(const QString& folder)
-        : folder_(folder)
-    {
-    }
+    explicit Host(const QString& folder) : folder_(folder) {}
 
     struct Drive {
         bool present = false;
         bool writable = true;
         QString name;
-        QStringList order;               // the files, in the order they went on
+        QStringList order;  // the files, in the order they went on
         QMap<QString, QByteArray> files;
     };
 
     QMainWindow frame;
     QList<QAction*> actions;
+    QList<QAction*> tilesActions;
     int buttons = 0;
-    int pictures = 0;
+    int pictures = 0;       // the buttons' pictures given, again when the look changes
+    QStringList typed;      // what was typed on the CPC's keyboard
+    QStringList assembled;  // the sources shown in the assembler
+    tuxape::PluginTiles tiles;
     Drive drive[2];
     QPointer<QObject> tuxDsk;
-    QStringList typed;
-    QStringList assembled;  // the sources shown in the assembler
+    QString speaks = QStringLiteral("en");
 
+    // ---- Version 1 ----
     QWidget* window() override { return &frame; }
     QAction* addAction(const QString& text, const QKeySequence& shortcut) override
     {
@@ -57,9 +58,19 @@ public:
     QByteArray readMemory(int, int size) override { return QByteArray(size, '\0'); }
     tuxape::PluginScreen screen() override { return {}; }
     void openInAssembler(const QString& path) override { assembled << path; }
-    bool assembleAndRun(const QString&) override { return false; }
     QString dataFolder() override { return folder_; }
+    bool assembleAndRun(const QString&) override { return false; }
 
+    // ---- Version 2 ----
+    QAction* addTilesAction(const QString& text) override
+    {
+        auto* action = new QAction(text, &frame);
+        tilesActions << action;
+        return action;
+    }
+    tuxape::PluginTiles selectedTiles() override { return tiles; }
+
+    // ---- Version 3 ----
     int drives() override { return 2; }
     tuxape::PluginDisc disc(int which) override
     {
@@ -85,6 +96,9 @@ public:
         return {};
     }
     QObject* plugin(const QString& id) override { return id == "tuxdsk" ? tuxDsk.data() : nullptr; }
+
+    // ---- Version 4 ----
+    QString language() override { return speaks; }
 
 private:
     QString folder_;

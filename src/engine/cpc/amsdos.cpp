@@ -45,7 +45,13 @@ std::optional<Header> readHeader(std::span<const uint8_t> file)
 
 std::span<const uint8_t> withoutHeader(std::span<const uint8_t> file)
 {
-    return readHeader(file) ? file.subspan(kHeaderSize) : file;
+    const std::optional<Header> header = readHeader(file);
+    if (!header)
+        return file;
+    const std::span<const uint8_t> after = file.subspan(kHeaderSize);
+    // A length of nothing, or of more than there is: all that follows.
+    const auto length = static_cast<size_t>(header->length);
+    return header->length > 0 && length < after.size() ? after.first(length) : after;
 }
 
 std::vector<uint8_t> makeHeader(const std::string& name, const Header& header)

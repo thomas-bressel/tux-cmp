@@ -40,5 +40,5 @@ int main()
         CHECK(run && run->sourceEnd == 0x4000 + made.size());
         CHECK(std::equal(original.begin(), original.end(), memory->begin() + 0xC000));
     }
-    return checkSummary("zx0_golden");
+    return checkSummary("engine_zx0_golden");
 }

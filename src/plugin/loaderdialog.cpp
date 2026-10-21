@@ -24,14 +24,23 @@
 #include "plugin.h"
 #include "prompts.h"
 
-using tuxcmp::cpc::Finding;
-using tuxcmp::cpc::Problem;
+namespace tuxcmp {
+
+using cpc::Finding;
+using cpc::Problem;
 
 namespace {
 
 QString count(int bytes)
 {
-    return LoaderDialog::tr("%1 bytes").arg(QLocale().toString(bytes));
+    return LoaderDialog::tr("%Ln bytes", nullptr, bytes);
+}
+
+// A line of what is found wrong: said in words, not by a colour alone.
+QString findingLine(bool fatal, const QString& text)
+{
+    return fatal ? QStringLiteral("<b>%1</b>").arg(LoaderDialog::tr("Error: %1").arg(text).toHtmlEscaped())
+                 : LoaderDialog::tr("Warning: %1").arg(text).toHtmlEscaped();
 }
 
 QLineEdit* addressEdit(const char* name)
@@ -67,16 +76,17 @@ LoaderDialog::LoaderDialog(tuxape::PluginHost* host, const DiscTarget& target, s
     , packed_(std::move(packed))
     , loader_(loader)
 {
-    setWindowTitle(tr("Decompression Program"));
+    setWindowTitle(tr("TuxCMP – Decompression Program"));
+    setObjectName("LoaderDialog");
 
     // ---- The data ----
-    destination_ = addressEdit("eDestination");
+    destination_ = addressEdit("edDestination");
     destinationInfo_ = new QLabel;
     destinationInfo_->setObjectName("lDestination");
     run_ = new QCheckBox(tr("Then &run at:"));
     run_->setObjectName("ckRun");
     run_->setToolTip(tr("Once back, the data are a program, run there; BASIC is not gone back to."));
-    entry_ = addressEdit("eEntry");
+    entry_ = addressEdit("edEntry");
     mode_ = new QComboBox;
     mode_->setObjectName("cbMode");
     mode_->addItem(tr("Unchanged"), -1);
@@ -102,14 +112,14 @@ LoaderDialog::LoaderDialog(tuxape::PluginHost* host, const DiscTarget& target, s
     data->setColumnStretch(2, 1);
 
     // ---- The files ----
-    basicName_ = nameEdit("eBasicName");
-    programName_ = nameEdit("eProgramName");
-    program_ = addressEdit("eProgram");
+    basicName_ = nameEdit("edBasicName");
+    programName_ = nameEdit("edProgramName");
+    program_ = addressEdit("edProgram");
     programInfo_ = new QLabel;
     programInfo_->setObjectName("lProgram");
     packedName_ = new QLabel;
     packedName_->setObjectName("lPackedName");
-    source_ = addressEdit("eSource");
+    source_ = addressEdit("edSource");
     packedInfo_ = new QLabel;
     packedInfo_->setObjectName("lPacked");
     auto* place = new QPushButton(tr("&Place Automatically"));
@@ -142,7 +152,7 @@ LoaderDialog::LoaderDialog(tuxape::PluginHost* host, const DiscTarget& target, s
 
     // ---- The loader ----
     listing_ = new QPlainTextEdit;
-    listing_->setObjectName("tListing");
+    listing_->setObjectName("teListing");
     listing_->setReadOnly(true);
     listing_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     listing_->setFixedHeight(listing_->fontMetrics().lineSpacing() * 8 + 12);
@@ -159,7 +169,7 @@ LoaderDialog::LoaderDialog(tuxape::PluginHost* host, const DiscTarget& target, s
     listingLayout->addWidget(listing_);
     listingLayout->addWidget(findings_);
 
-    auto* assembler = new QPushButton(tr("Show in the &Assembler"));
+    auto* assembler = new QPushButton(tr("Show in the Ass&embler"));
     assembler->setObjectName("bAssembler");
     assembler->setAutoDefault(false);
     assembler->setEnabled(host_ != nullptr);
@@ -355,20 +365,17 @@ void LoaderDialog::update()
     entry_->setEnabled(run_->isChecked());
     // Run at once, the data never come back to BASIC.
     waitKey_->setEnabled(!run_->isChecked());
-    runAfter_->setText(tr("&Run it once it is on the disc: RUN\"%1\" typed on the CPC's keyboard")
+    runAfter_->setText(tr("R&un it once it is on the disc: RUN\"%1\" typed on the CPC's keyboard")
                            .arg(QString::fromStdString(made.basicName)));
     listing_->setPlainText(QString::fromStdString(tuxcmp::cpc::loaderListing(made)));
 
     QStringList lines;
     bool fine = addressesRead();
     if (!fine)
-        lines << QStringLiteral("<span style=\"color:#d03030\">%1</span>")
-                     .arg(tr("An address is not one: four hexadecimal digits, as &C000.").toHtmlEscaped());
+        lines << findingLine(true, tr("An address is not one: four hexadecimal digits, as &C000."));
     const std::vector<Finding> found = findings();
     for (const Finding& finding : found)
-        lines << (finding.fatal ? QStringLiteral("<span style=\"color:#d03030\">%1</span>")
-                                : QStringLiteral("<i>%1</i>"))
-                     .arg(describe(finding).toHtmlEscaped());
+        lines << findingLine(finding.fatal, describe(finding));
     fine = fine && tuxcmp::cpc::works(found);
     if (lines.isEmpty())
         lines << tr("Tried in the CPC's memory: the data come back whole.").toHtmlEscaped();
@@ -412,3 +419,5 @@ QString LoaderDialog::describe(const Finding& finding)
     }
     return {};
 }
+
+}  // namespace tuxcmp

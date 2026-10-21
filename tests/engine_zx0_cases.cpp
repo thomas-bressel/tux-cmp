@@ -174,5 +174,5 @@ int main()
         return done <= all;
     });
     CHECK(whole.has_value() && last == 8000 && calls > 30);
-    return checkSummary("zx0_cases");
+    return checkSummary("engine_zx0_cases");
 }

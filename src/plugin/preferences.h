@@ -4,6 +4,8 @@
 #include <QString>
 #include <QVariant>
 
+namespace tuxcmp {
+
 // What TuxCMP remembers from one day to the next: the folder files were
 // last taken from and saved to, and the choices of its windows. They are
 // kept in TuxCMP.ini, in the folder TuxAPE gives the plugin for its own;
@@ -39,3 +41,5 @@ private:
     QString file_;
     QHash<QString, QVariant> kept_;
 };
+
+}  // namespace tuxcmp

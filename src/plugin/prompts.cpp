@@ -3,7 +3,7 @@
 #include <QMessageBox>
 #include <QWidget>
 
-namespace prompts {
+namespace tuxcmp::prompts {
 
 namespace {
 
@@ -54,4 +54,4 @@ void setAnswerer(std::function<bool(const QString&)> answer)
     answerer() = std::move(answer);
 }
 
-}  // namespace prompts
+}  // namespace tuxcmp::prompts

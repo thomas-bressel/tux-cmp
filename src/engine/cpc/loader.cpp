@@ -1,6 +1,7 @@
 #include "cpc/loader.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <memory>
 
@@ -88,6 +89,26 @@ std::vector<Finding> placeFindings(const Loader& loader, int length, int packedL
 }
 
 }  // namespace
+
+uint16_t defaultDestination(const std::optional<Header>& header, size_t length, const std::string& extension)
+{
+    if (header)
+        return header->loadAddress;
+    std::string upper = extension;
+    std::transform(upper.begin(), upper.end(), upper.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    const bool screen = length == 0x4000 || (length < 0x4000 && upper == "SCR");
+    return screen ? kScreen : 0x4000;
+}
+
+std::optional<uint16_t> defaultEntry(const std::optional<Header>& header, size_t length)
+{
+    if (!header || header->type != kBinary || !header->entryAddress)
+        return std::nullopt;
+    const int start = header->loadAddress, end = start + static_cast<int>(length);
+    if (start >= kScreen || header->entryAddress < start || header->entryAddress >= end)
+        return std::nullopt;
+    return header->entryAddress;
+}
 
 bool works(const std::vector<Finding>& findings)
 {

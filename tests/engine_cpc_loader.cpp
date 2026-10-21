@@ -242,5 +242,21 @@ int main()
         CHECK(!memoryLimit(screen).has_value());
         CHECK(loaderListing(screen).find("MEMORY") == std::string::npos);
     }
-    return checkSummary("cpc_loader");
+
+    // ---- Where the data go back, and are run ----
+    {
+        CHECK_EQ(defaultDestination(std::nullopt, 0x4000, "BIN"), 0xC000);
+        CHECK_EQ(defaultDestination(std::nullopt, 0x3F00, "scr"), 0xC000);
+        CHECK_EQ(defaultDestination(std::nullopt, 0x3F00, "BIN"), 0x4000);
+        CHECK_EQ(defaultDestination(std::nullopt, 0x4001, "SCR"), 0x4000);
+        const Header game{kBinary, 0x4000, 0x4010, 3000};
+        CHECK_EQ(defaultDestination(game, 3000, "BIN"), 0x4000);
+        CHECK(defaultEntry(game, 3000) == 0x4010);
+        CHECK(!defaultEntry(std::nullopt, 3000));
+        // Not among the data, a picture, a BASIC program: not run.
+        CHECK(!defaultEntry(game, 0x10));
+        CHECK(!defaultEntry(Header{kBinary, 0xC000, 0xC000, 0x4000}, 0x4000));
+        CHECK(!defaultEntry(Header{kBasic, 0x170, 0x170, 100}, 100));
+    }
+    return checkSummary("engine_cpc_loader");
 }

@@ -1,11 +1,11 @@
 find_package(Qt6 REQUIRED COMPONENTS Test Widgets)
 
-# The tests of the engine's parts: every zx0_*.cpp and cpc_*.cpp of this
-# folder is a program of its own, linked with its library and nothing else.
-# What PackZX0 itself made of the same files is in tests/golden, for them
-# to compare with.
+# The tests of the engine's parts: every engine_zx0_*.cpp and
+# engine_cpc_*.cpp of this folder is a program of its own, linked with its
+# part and nothing else. What PackZX0 itself made of the same files is in
+# tests/golden, for them to compare with.
 foreach(part zx0 cpc)
-    file(GLOB TUXCMP_PART_TESTS CONFIGURE_DEPENDS ${part}_*.cpp)
+    file(GLOB TUXCMP_PART_TESTS CONFIGURE_DEPENDS engine_${part}_*.cpp)
     foreach(source ${TUXCMP_PART_TESTS})
         get_filename_component(test ${source} NAME_WE)
         add_executable(${test} ${source})
@@ -25,9 +25,9 @@ add_dependencies(cli_tuxcmp tuxcmp_cli)
 add_test(NAME cli_tuxcmp COMMAND cli_tuxcmp)
 
 # The plugin as TuxAPE loads it: found as a library, started with a host
-# of the test's own, its window shown.
+# of the test's own, its window shown; in English, then in French.
 add_executable(plugin_window plugin_window.cpp)
-target_include_directories(plugin_window PRIVATE ${TUXAPE_DIR}/sdk)
+target_include_directories(plugin_window PRIVATE ${TUXAPE_SDK})
 target_link_libraries(plugin_window PRIVATE Qt6::Widgets Qt6::Test)
 add_dependencies(plugin_window tuxcmp)
 target_compile_definitions(plugin_window PRIVATE

@@ -5,6 +5,8 @@
 
 #include <QString>
 
+namespace tuxcmp {
+
 // Addresses as the windows show them and read them: in hexadecimal, after
 // a '&' as the CPC writes them; '#', '$', "0x" or nothing before the digits
 // read as well.
@@ -28,3 +30,5 @@ inline std::optional<uint16_t> readAddress(QString text)
         return std::nullopt;
     return static_cast<uint16_t>(value);
 }
+
+}  // namespace tuxcmp

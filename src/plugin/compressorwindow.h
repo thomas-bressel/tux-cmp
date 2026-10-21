@@ -26,6 +26,8 @@ namespace tuxape {
 class PluginHost;
 }
 
+namespace tuxcmp {
+
 // TuxCMP's window: PackZX0 with somewhere to put what it makes.
 //
 // A file of the computer is chosen, compressed with ZX0 (in the background:
@@ -82,9 +84,9 @@ public:
     // it put one there.
     bool makeLoader(const DiscTarget& target);
 
-    // Where the data go back, if nothing says otherwise: where the header
-    // loaded them; a screen's 16K at &C000; else &4000. And where they are
-    // run, if the header says.
+    // Where the data go back, if nothing says otherwise, and where they are
+    // run, if the header says: as the engine chooses them
+    // (cpc::defaultDestination, cpc::defaultEntry).
     uint16_t destination() const;
     std::optional<uint16_t> entry() const;
 
@@ -151,4 +153,8 @@ private:
     void forget();
     void updateButtons();
     std::optional<uint16_t> typedLoad() const;
+    // The file's header, if what is compressed is without it.
+    std::optional<tuxcmp::cpc::Header> skippedHeader() const;
 };
+
+}  // namespace tuxcmp

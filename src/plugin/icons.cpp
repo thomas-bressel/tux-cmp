@@ -6,6 +6,8 @@
 #include <QPixmap>
 #include <QPolygonF>
 
+namespace tuxcmp {
+
 QIcon compressIcon()
 {
     const QColor ink = QApplication::palette().color(QPalette::WindowText);
@@ -29,3 +31,5 @@ QIcon compressIcon()
     painter.drawPolygon(QPolygonF({{6.5, 19.5}, {13.5, 19.5}, {10.0, 15.5}}));
     return QIcon(pixmap);
 }
+
+}  // namespace tuxcmp

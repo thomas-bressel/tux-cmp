@@ -3,6 +3,8 @@
 #include <QDir>
 #include <QSettings>
 
+namespace tuxcmp {
+
 Preferences::Preferences(const QString& folder)
 {
     if (folder.isEmpty())
@@ -26,3 +28,5 @@ void Preferences::set(const char* key, const QVariant& value)
     // Written at once: TuxAPE may unload the plugin at any time.
     kept.sync();
 }
+
+}  // namespace tuxcmp

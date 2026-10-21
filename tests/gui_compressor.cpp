@@ -33,6 +33,11 @@
 #include "loaderdialog.h"
 #include "prompts.h"
 
+using tuxcmp::CompressorWindow;
+using tuxcmp::DiscTarget;
+using tuxcmp::LoaderDialog;
+namespace prompts = tuxcmp::prompts;
+
 namespace {
 
 // A TuxDSK of the test's own: what it offers other plugins, and a note of
@@ -156,12 +161,12 @@ int main(int argc, char* argv[])
 
     g_answers = {true};
     whenLoader([&](LoaderDialog* dialog) {
-        CHECK(dialog->windowTitle() == "Decompression Program");
+        CHECK(dialog->windowTitle() == QString::fromUtf8("TuxCMP – Decompression Program"));
         const tuxcmp::cpc::Loader loader = dialog->loader();
         CHECK(loader.destination == 0xC000 && loader.source == suggested.source && loader.program == suggested.program);
         CHECK(loader.mode == 1 && loader.waitKey && !loader.entry);
         CHECK(dialog->findings().empty());
-        auto* listing = dialog->findChild<QPlainTextEdit*>("tListing");
+        auto* listing = dialog->findChild<QPlainTextEdit*>("teListing");
         CHECK(listing && listing->toPlainText() == QString::fromStdString(tuxcmp::cpc::loaderListing(loader)));
         auto* findings = dialog->findChild<QLabel*>("lFindings");
         CHECK(findings && findings->text().contains("come back whole"));
@@ -300,7 +305,7 @@ int main(int argc, char* argv[])
         const tuxcmp::zx0::Packed packed{shopPacked, 2};
         LoaderDialog dialog(&host, DiscTarget::inDrive(0), shop, packed, suggested);
         auto* ok = dialog.findChild<QPushButton*>("bPlace");
-        auto* source = dialog.findChild<QLineEdit*>("eSource");
+        auto* source = dialog.findChild<QLineEdit*>("edSource");
         auto* findings = dialog.findChild<QLabel*>("lFindings");
         CHECK(ok && source && findings);
         // Over the screen: written over before it is read.
@@ -308,7 +313,7 @@ int main(int argc, char* argv[])
         emit source->textEdited(source->text());
         CHECK(dialog.loader().source == 0xC000);
         CHECK(!tuxcmp::cpc::works(dialog.findings()));
-        CHECK(findings->text().contains("write over the compressed file"));
+        CHECK(findings->text().contains("Error: Decompressed there") && findings->text().contains("write over the compressed file"));
         // An address that is not one.
         source->setText("&G000");
         emit source->textEdited(source->text());
@@ -321,7 +326,7 @@ int main(int argc, char* argv[])
         mode->setCurrentIndex(0);
         emit mode->activated(0);
         CHECK(dialog.loader().mode == -1 && tuxcmp::cpc::works(dialog.findings()) && !dialog.findings().empty());
-        CHECK(findings->text().contains("Without MODE"));
+        CHECK(findings->text().contains("Warning: Without MODE") && !findings->text().contains("Error:"));
     }
 
     // ---- Stopped ----

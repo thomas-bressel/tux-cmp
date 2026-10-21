@@ -9,6 +9,8 @@ namespace tuxape {
 class PluginHost;
 }
 
+namespace tuxcmp {
+
 // Where TuxCMP puts its files: on the disc in one of TuxAPE's drives, or on
 // the first disc of TuxDSK's window, if TuxDSK is there to take them.
 
@@ -54,3 +56,5 @@ bool put(tuxape::PluginHost* host, const DiscTarget& target, const QString& name
          bool replace, QWidget* over);
 
 }  // namespace discs
+
+}  // namespace tuxcmp

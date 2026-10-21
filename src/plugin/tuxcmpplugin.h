@@ -2,8 +2,11 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QTranslator>
 
 #include "plugin.h"
+
+namespace tuxcmp {
 
 class CompressorWindow;
 
@@ -28,6 +31,9 @@ private:
     tuxape::PluginHost* host_ = nullptr;
     QAction* action_ = nullptr;
     QPointer<CompressorWindow> window_;
+    QTranslator translator_;
 
     void showWindow();
 };
+
+}  // namespace tuxcmp
