@@ -44,3 +44,11 @@ target_link_libraries(gui_compressor PRIVATE tuxcmp_ui Qt6::Test)
 target_compile_definitions(gui_compressor PRIVATE TUXCMP_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden")
 add_test(NAME gui_compressor COMMAND gui_compressor)
 set_tests_properties(gui_compressor PROPERTIES ENVIRONMENT QT_QPA_PLATFORM=offscreen)
+
+# Every window test in English as TuxAPE runs the plugin: with English's
+# plurals, which the plugin's build makes (tests/english.h).
+foreach(test gui_compressor)
+    target_compile_definitions(${test} PRIVATE
+        TUXCMP_ENGLISH="$<FILTER:$<TARGET_PROPERTY:tuxcmp,TUXAPE_QM_FILES>,INCLUDE,_en[.]qm$>")
+    add_dependencies(${test} tuxcmp)
+endforeach()

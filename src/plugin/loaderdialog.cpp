@@ -33,7 +33,7 @@ namespace {
 
 QString count(int bytes)
 {
-    return LoaderDialog::tr("%Ln bytes", nullptr, bytes);
+    return LoaderDialog::tr("%Ln byte(s)", nullptr, bytes);
 }
 
 // A line of what is found wrong: said in words, not by a colour alone.

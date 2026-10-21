@@ -4,7 +4,7 @@
 <context>
     <name>tuxcmp::CompressorWindow</name>
     <message numerus="yes">
-        <source>%Ln bytes</source>
+        <source>%Ln byte(s)</source>
         <translation>
             <numerusform>%Ln octet</numerusform>
             <numerusform>%Ln octets</numerusform>
@@ -244,7 +244,7 @@ Voulez-vous un programme pour le décompresser ? Un chargeur BASIC, et le progra
 <context>
     <name>tuxcmp::LoaderDialog</name>
     <message numerus="yes">
-        <source>%Ln bytes</source>
+        <source>%Ln byte(s)</source>
         <translation>
             <numerusform>%Ln octet</numerusform>
             <numerusform>%Ln octets</numerusform>

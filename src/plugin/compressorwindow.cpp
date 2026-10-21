@@ -35,7 +35,7 @@ namespace {
 
 QString count(qsizetype bytes)
 {
-    return CompressorWindow::tr("%Ln bytes", nullptr, static_cast<int>(bytes));
+    return CompressorWindow::tr("%Ln byte(s)", nullptr, static_cast<int>(bytes));
 }
 
 QString typeName(uint8_t type)

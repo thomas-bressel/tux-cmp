@@ -25,6 +25,7 @@
 #include <QTimer>
 
 #include "check.h"
+#include "english.h"
 #include "compressorwindow.h"
 #include "cpc/amsdos.h"
 #include "cpc/basic.h"
@@ -114,6 +115,7 @@ bool waitFor(CompressorWindow& window)
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
+    const English english;
     // Numbers as the checks write them.
     QLocale::setDefault(QLocale::c());
     const QString prefix = argc > 1 ? QString::fromLocal8Bit(argv[1]) : QString();
@@ -137,7 +139,7 @@ int main(int argc, char* argv[])
     // Nothing to put anywhere yet; the drives as TuxAPE has them.
     CHECK(!putDrive->isEnabled() && !putTuxDsk->isEnabled());
     CHECK_EQ(drives->count(), 2);
-    CHECK(drives->itemText(0) == "Drive A: work.dsk, 0 file(s), 178K free" && drives->itemText(1) == "Drive B: no disc");
+    CHECK(drives->itemText(0) == "Drive A: work.dsk, 0 files, 178K free" && drives->itemText(1) == "Drive B: no disc");
     CHECK(tuxDskInfo->text().startsWith("not loaded"));
 
     // ---- A picture, to the disc in A:, with its loader ----
@@ -192,7 +194,7 @@ int main(int argc, char* argv[])
     }
     CHECK(host.typed == QStringList{"RUN\"SHOP.BAS\"\n"});
     CHECK(window.status() == "SHOP.BAS, SHOP.BIN and SHOP.ZX0 are on the disc in drive A:; RUN\"SHOP\" runs them.");
-    CHECK(drives->itemText(0) == "Drive A: work.dsk, 3 file(s), 178K free");
+    CHECK(drives->itemText(0) == "Drive A: work.dsk, 3 files, 178K free");
 
     // Put again: asked before it replaces the one there, then about the
     // program, which is not wanted this time.

@@ -56,7 +56,7 @@ tuxape_add_plugin(tuxcmp
     API 4
     FILES LICENSE
     PROGRAMS tuxcmp_cli
-    TRANSLATIONS translations/tuxcmp_fr.ts
+    TRANSLATIONS translations/tuxcmp_en.ts translations/tuxcmp_fr.ts
     TRANSLATE_TARGETS tuxcmp_ui)
 
 if(TUXCMP_BUILD_TESTS)
